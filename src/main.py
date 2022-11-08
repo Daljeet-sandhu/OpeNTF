@@ -1,4 +1,4 @@
-import sys,os, json
+import sys, os, json
 import argparse
 import numpy as np
 import pandas as pd
@@ -19,13 +19,15 @@ from mdl.tnmt import tNmt
 from mdl.tntf import tNtf
 from mdl.team2vec import Team2Vec
 
-def create_evaluation_splits(n_sample, n_folds, train_ratio=0.85, year_idx=None, output='./', step_ahead=1):   
+
+def create_evaluation_splits(n_sample, n_folds, train_ratio=0.85, year_idx=None, output='./', step_ahead=1):
     if year_idx:
-        train = np.arange(year_idx[0][0], year_idx[-step_ahead][0])  # for teamporal folding, we do on each time interval ==> look at tntf.py
+        train = np.arange(year_idx[0][0], year_idx[-step_ahead][
+            0])  # for teamporal folding, we do on each time interval ==> look at tntf.py
         test = np.arange(year_idx[-step_ahead][0], n_sample)
     else:
         train, test = train_test_split(np.arange(n_sample), train_size=train_ratio, random_state=0, shuffle=True)
-        
+
     splits = dict()
     splits['test'] = test
     splits['folds'] = dict()
@@ -35,15 +37,18 @@ def create_evaluation_splits(n_sample, n_folds, train_ratio=0.85, year_idx=None,
         splits['folds'][k]['train'] = train[trainIdx]
         splits['folds'][k]['valid'] = train[validIdx]
 
-    with open(f'{output}/splits.json', 'w') as f: json.dump(splits, f, cls=NumpyArrayEncoder, indent=1)
+    with open(f'{output}/splits.json', 'w') as f:
+        json.dump(splits, f, cls=NumpyArrayEncoder, indent=1)
     return splits
+
 
 def aggregate(output):
     files = list()
     for dirpath, dirnames, filenames in os.walk(output):
-        if not dirnames: files += [os.path.join(os.path.normpath(dirpath), file).split(os.sep) for file in filenames if file.endswith("pred.eval.mean.csv")]
+        if not dirnames: files += [os.path.join(os.path.normpath(dirpath), file).split(os.sep) for file in filenames if
+                                   file.endswith("pred.eval.mean.csv")]
 
-    #concate the year folder to setting for temporal baselines
+    # concate the year folder to setting for temporal baselines
     for file in files:
         if file[3].startswith('t'):
             file[4] += '/' + file[5]
@@ -61,12 +66,17 @@ def aggregate(output):
             hr = False
             for i, row in df.iterrows():
                 if not hr:
-                    dff = pd.concat([dff, pd.read_csv(f"{output}{rd}/{row['baseline']}/{row['setting']}/{rf}", usecols=[0])], axis=1, ignore_index=True)
+                    dff = pd.concat(
+                        [dff, pd.read_csv(f"{output}{rd}/{row['baseline']}/{row['setting']}/{rf}", usecols=[0])],
+                        axis=1, ignore_index=True)
                     hr = True
-                dff = pd.concat([dff, pd.read_csv(f"{output}{rd}/{row['baseline']}/{row['setting']}/{rf}", usecols=[1])], axis=1, ignore_index=True)
+                dff = pd.concat(
+                    [dff, pd.read_csv(f"{output}{rd}/{row['baseline']}/{row['setting']}/{rf}", usecols=[1])], axis=1,
+                    ignore_index=True)
                 names += [row['baseline'] + '.' + row['setting']]
             dff.set_axis(names, axis=1, inplace=True)
             dff.to_csv(f"{output}{rd}/{rf.replace('.csv', '.agg.csv')}", index=False)
+
 
 def run(data_list, domain_list, filter, model_list, output, settings):
     filter_str = f".filtered.mt{settings['data']['filter']['min_nteam']}.ts{settings['data']['filter']['min_team_size']}" if filter else ""
@@ -83,16 +93,26 @@ def run(data_list, domain_list, filter, model_list, output, settings):
     if 'bnn' in model_list: models['bnn'] = Bnn()
     if 'fnn_emb' in model_list: models['fnn_emb'] = Fnn()
     if 'bnn_emb' in model_list: models['bnn_emb'] = Bnn()
-    if 'tfnn' in model_list: models['tfnn'] = tNtf(Fnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
-    if 'tbnn' in model_list: models['tbnn'] = tNtf(Bnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
-    if 'tfnn_emb' in model_list: models['tfnn_emb'] = tNtf(Fnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
-    if 'tbnn_emb' in model_list: models['tbnn_emb'] = tNtf(Bnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
-    if 'tfnn_a1' in model_list: models['tfnn_a1'] = tNtf(Fnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
-    if 'tbnn_a1' in model_list: models['tbnn_a1'] = tNtf(Bnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
-    if 'tfnn_emb_a1' in model_list: models['tfnn_emb_a1'] = tNtf(Fnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
-    if 'tbnn_emb_a1' in model_list: models['tbnn_emb_a1'] = tNtf(Bnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
-    if 'tfnn_dt2v_emb' in model_list: models['tfnn_dt2v_emb'] = tNtf(Fnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
-    if 'tbnn_dt2v_emb' in model_list: models['tbnn_dt2v_emb'] = tNtf(Bnn(), settings['model']['nfolds'], step_ahead=settings['model']['step_ahead'])
+    if 'tfnn' in model_list: models['tfnn'] = tNtf(Fnn(), settings['model']['nfolds'],
+                                                   step_ahead=settings['model']['step_ahead'])
+    if 'tbnn' in model_list: models['tbnn'] = tNtf(Bnn(), settings['model']['nfolds'],
+                                                   step_ahead=settings['model']['step_ahead'])
+    if 'tfnn_emb' in model_list: models['tfnn_emb'] = tNtf(Fnn(), settings['model']['nfolds'],
+                                                           step_ahead=settings['model']['step_ahead'])
+    if 'tbnn_emb' in model_list: models['tbnn_emb'] = tNtf(Bnn(), settings['model']['nfolds'],
+                                                           step_ahead=settings['model']['step_ahead'])
+    if 'tfnn_a1' in model_list: models['tfnn_a1'] = tNtf(Fnn(), settings['model']['nfolds'],
+                                                         step_ahead=settings['model']['step_ahead'])
+    if 'tbnn_a1' in model_list: models['tbnn_a1'] = tNtf(Bnn(), settings['model']['nfolds'],
+                                                         step_ahead=settings['model']['step_ahead'])
+    if 'tfnn_emb_a1' in model_list: models['tfnn_emb_a1'] = tNtf(Fnn(), settings['model']['nfolds'],
+                                                                 step_ahead=settings['model']['step_ahead'])
+    if 'tbnn_emb_a1' in model_list: models['tbnn_emb_a1'] = tNtf(Bnn(), settings['model']['nfolds'],
+                                                                 step_ahead=settings['model']['step_ahead'])
+    if 'tfnn_dt2v_emb' in model_list: models['tfnn_dt2v_emb'] = tNtf(Fnn(), settings['model']['nfolds'],
+                                                                     step_ahead=settings['model']['step_ahead'])
+    if 'tbnn_dt2v_emb' in model_list: models['tbnn_dt2v_emb'] = tNtf(Bnn(), settings['model']['nfolds'],
+                                                                     step_ahead=settings['model']['step_ahead'])
     if 'nmt' in model_list: models['nmt'] = Nmt()
     if 'tnmt' in model_list: models['tnmt'] = tNmt(settings['model']['nfolds'], settings['model']['step_ahead'])
 
@@ -105,38 +125,94 @@ def run(data_list, domain_list, filter, model_list, output, settings):
         datapath = data_list[domain_list.index(d_name)]
         prep_output = f'./../data/preprocessed/{d_name}/{os.path.split(datapath)[-1]}'
         vecs, indexes = d_cls.generate_sparse_vectors(datapath, f'{prep_output}{filter_str}', filter, settings['data'])
+
+        def merge_vectors(vec):
+            print(f'len of matrix before operation: {len(vec["member"].rows)}')
+            merge_list = {}
+            for i in range(len(vec['skill'].rows)):
+                merge_list[f'{i}'] = set()
+                for j in range(i + 1, len(vec['skill'].rows)):
+                    if vec['skill'].rows[i] == vec['skill'].rows[j]:
+                        merge_list[f'{i}'].add(j)
+                        # print(colored(f'row {i} and {j} are the same!', 'red'))
+                if len(merge_list[f'{i}']) < 1:
+                    del merge_list[f'{i}']
+
+            delete_set = set()
+            for key in merge_list.keys():
+                for item in merge_list[key]:
+                    delete_set.add(item)
+
+            for item in delete_set:
+                try:
+                    del merge_list[f'{item}']
+                except KeyError:
+                    pass
+            # print(merge_list)
+            del_list = []
+            for key_ in merge_list.keys():
+                # print(colored(vecs['member'].getrow(int(key_)).toarray(), 'yellow'))
+                for value_ in merge_list[key_]:
+                    del_list.append(value_)
+                    vec1 = vec['member'].getrow(int(key_))
+                    vec2 = vec['member'].getrow(value_)
+                    result = np.add(vec1, vec2)
+                    result[result != 0] = 1
+                    vec['member'][int(key_), :] = scipy.sparse.lil_matrix(result)
+                # print(colored(vecs['member'].getrow(int(key_)).toarray(), 'red'))
+            vec['id'] = scipy.sparse.lil_matrix(np.delete(vec['id'].toarray(), del_list, axis=0))
+            vec['skill'] = scipy.sparse.lil_matrix(np.delete(vec['skill'].toarray(), del_list, axis=0))
+            vec['member'] = scipy.sparse.lil_matrix(np.delete(vec['member'].toarray(), del_list, axis=0))
+            print(f'len of matrix after operation: {len(vec["member"].rows)}')
+            return vec
+
+        vecs = merge_vectors(vecs)
+
         year_idx = []
         for i in range(1, len(indexes['i2y'])):
-            if indexes['i2y'][i][0] - indexes['i2y'][i-1][0] > settings['model']['nfolds']:
-                year_idx.append(indexes['i2y'][i-1])
+            if indexes['i2y'][i][0] - indexes['i2y'][i - 1][0] > settings['model']['nfolds']:
+                year_idx.append(indexes['i2y'][i - 1])
         year_idx.append(indexes['i2y'][-1])
         indexes['i2y'] = year_idx
-        splits = create_evaluation_splits(vecs['id'].shape[0], settings['model']['nfolds'], settings['model']['train_test_split'], indexes['i2y'] if temporal else None, output=f'{prep_output}{filter_str}', step_ahead=settings['model']['step_ahead'])
+        splits = create_evaluation_splits(vecs['id'].shape[0], settings['model']['nfolds'],
+                                          settings['model']['train_test_split'], indexes['i2y'] if temporal else None,
+                                          output=f'{prep_output}{filter_str}',
+                                          step_ahead=settings['model']['step_ahead'])
 
         for (m_name, m_obj) in models.items():
             if m_name.find('_emb') > 0:
-                t2v = Team2Vec(vecs, indexes, 'dt2v' if m_name.find('_dt2v') > 0 else 'skill', f'./../data/preprocessed/{d_name}/{os.path.split(datapath)[-1]}{filter_str}')
+                t2v = Team2Vec(vecs, indexes, 'dt2v' if m_name.find('_dt2v') > 0 else 'skill',
+                               f'./../data/preprocessed/{d_name}/{os.path.split(datapath)[-1]}{filter_str}')
                 emb_setting = settings['model']['baseline']['emb']
                 t2v.train(emb_setting['d'], emb_setting['w'], emb_setting['dm'], emb_setting['e'])
                 vecs['skill'] = t2v.dv()
-            
-            if m_name.endswith('a1'):
-                vecs['skill'] = lil_matrix(scipy.sparse.hstack((vecs['skill'], lil_matrix(np.ones((vecs['skill'].shape[0], 1))))))
 
-            m_obj.run(splits, vecs, indexes, f'{output}{os.path.split(datapath)[-1]}{filter_str}/{m_name}', settings['model']['baseline'][m_name.lstrip('t').replace('_emb', '').replace('_dt2v', '')], settings['model']['cmd'])
+            if m_name.endswith('a1'):
+                vecs['skill'] = lil_matrix(
+                    scipy.sparse.hstack((vecs['skill'], lil_matrix(np.ones((vecs['skill'].shape[0], 1))))))
+
+            m_obj.run(splits, vecs, indexes, f'{output}{os.path.split(datapath)[-1]}{filter_str}/{m_name}',
+                      settings['model']['baseline'][m_name.lstrip('t').replace('_emb', '').replace('_dt2v', '')],
+                      settings['model']['cmd'])
     if 'agg' in settings['model']['cmd']: aggregate(output)
+
 
 def addargs(parser):
     dataset = parser.add_argument_group('dataset')
-    dataset.add_argument('-data', '--data-list', nargs='+', type=str, default=[], required=True, help='a list of dataset paths; required; (eg. -data ./../data/raw/toy.json)')
-    dataset.add_argument('-domain', '--domain-list', nargs='+', type=str.lower, default=[], required=True, help='a list of domains; required; (eg. -domain dblp imdb uspt)')
-    dataset.add_argument('-filter', type=int, default=0, choices=[0, 1], help='remove outliers? (e.g., -filter 0 (default) or 1)')
+    dataset.add_argument('-data', '--data-list', nargs='+', type=str, default=[], required=True,
+                         help='a list of dataset paths; required; (eg. -data ./../data/raw/toy.json)')
+    dataset.add_argument('-domain', '--domain-list', nargs='+', type=str.lower, default=[], required=True,
+                         help='a list of domains; required; (eg. -domain dblp imdb uspt)')
+    dataset.add_argument('-filter', type=int, default=0, choices=[0, 1],
+                         help='remove outliers? (e.g., -filter 0 (default) or 1)')
 
     baseline = parser.add_argument_group('baseline')
-    baseline.add_argument('-model', '--model-list', nargs='+', type=str.lower, default=[], required=True, help='a list of neural models (eg. -model random fnn bnn fnn_emb bnn_emb nmt)')
+    baseline.add_argument('-model', '--model-list', nargs='+', type=str.lower, default=[], required=True,
+                          help='a list of neural models (eg. -model random fnn bnn fnn_emb bnn_emb nmt)')
 
     output = parser.add_argument_group('output')
-    output.add_argument('-output', type=str, default='./../output/', help='The output path (default: -output ./../output/)')
+    output.add_argument('-output', type=str, default='./../output/',
+                        help='The output path (default: -output ./../output/)')
 
 
 # python -u main.py -data ../data/raw/dblp/toy.dblp.v12.json
@@ -159,4 +235,8 @@ if __name__ == '__main__':
         settings=param.settings)
 
     # aggregate(args.output)
-
+    # run(data_list=['../data/raw/dblp/toy.dblp.v12.json'],
+    #     domain_list=['dblp'],
+    #     model_list=['fnn'],
+    #     filter=1,
+    #     output='./../output/')
